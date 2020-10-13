@@ -52,9 +52,14 @@ Function CreateAzureVMFromPackerTemplate {
     $subnetName = $env:UserName + [System.GUID]::NewGuid().ToString().ToUpper()
     $nicName = $env:UserName + [System.GUID]::NewGuid().ToString().ToUpper()
     $publicIpName = $env:UserName + [System.GUID]::NewGuid().ToString().ToUpper()
+    $nsgName = $env:UserName + [System.GUID]::NewGuid().ToString().ToUpper()
+
+    Write-Host "'nCreate NSG for VM subnet"
+    ($nsg = az network nsg create -g $ResourceGroupName -n $nsgName -l $AzureLocation --subscription $subscriptionId)
+    $nsgId = ($nsg | ConvertFrom-Json).id
 
     Write-Host "Creating a virtual network and subnet"
-    ($vnet = az network vnet create -g $ResourceGroupName -l $AzureLocation -n $vnetName --address-prefixes 10.0.0.0/16 --subnet-name $subnetName --subnet-prefixes 10.0.1.0/24 --subscription $subscriptionId)
+    ($vnet = az network vnet create -g $ResourceGroupName -l $AzureLocation -n $vnetName --address-prefixes 10.0.0.0/16 --subnet-name $subnetName --subnet-prefixes 10.0.1.0/24 --subscription $subscriptionId --nsg $nsgId)
     $subnetId = ($vnet | ConvertFrom-Json).newVNet.subnets[0].id
 
     Write-Host "`nCreating a network interface controller (NIC)"
